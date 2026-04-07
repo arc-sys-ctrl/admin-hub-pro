@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 import clothing1 from "@/assets/clothing-1.jpg";
 import clothing2 from "@/assets/clothing-2.jpg";
@@ -25,6 +27,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [phase, setPhase] = useState<"logo" | "login">("logo");
   const { toast } = useToast();
+  const { setUser } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => setPhase("login"), 2800);
@@ -36,17 +40,41 @@ export default function LoginPage() {
     if (!email.trim() || !password.trim()) return;
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const response = await api.post("/auth/login", { email, password });
+      const { token, user } = response.data;
 
-    if (error) {
+      if (user.role !== 'admin') {
+        toast({
+          title: "Access denied",
+          description: "This portal is for administrators only.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem("sophix_token", token);
+      localStorage.setItem("sophix_user", JSON.stringify(user));
+      setUser(user);
+      
+      toast({
+        title: "Welcome back!",
+        description: `Logged in as ${user.full_name}`,
+      });
+      
+      navigate("/");
+    } catch (error: any) {
       toast({
         title: "Login failed",
-        description: error.message,
+        description: error.response?.data?.error || "An error occurred during login.",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
+
 
   return (
     <div className="relative min-h-screen overflow-hidden" style={{ backgroundColor: "hsl(0 0% 5%)" }}>
