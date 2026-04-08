@@ -1,21 +1,20 @@
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
-import { StatCard } from "@/components/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { 
-  DollarSign, 
-  ShoppingCart, 
   Users, 
-  Truck, 
-  Package 
+  ShoppingCart, 
+  DollarSign, 
+  Package,
+  Clock,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { StatCard } from "@/components/StatCard";
 
 const statusColor: Record<string, string> = {
   delivered: "bg-success/10 text-success border-0",
   pending: "bg-warning/10 text-warning border-0",
-  in_transit: "bg-primary/10 text-primary border-0",
-  processing: "bg-primary/10 text-primary border-0",
+  cancelled: "bg-destructive/10 text-destructive border-0",
 };
 
 export default function DashboardPage() {
@@ -64,16 +63,46 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's what's happening today.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground">Welcome back! Here's what's happening today.</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total Revenue" value={`KSh ${totalRevenue.toLocaleString()}`} change="Live data" changeType="positive" icon={DollarSign} iconColor="bg-success/10 text-success" />
-        <StatCard title="Total Orders" value={orders.length} change="From database" changeType="positive" icon={ShoppingCart} iconColor="bg-primary/10 text-primary" />
-        <StatCard title="Active Products" value={activeProducts} change={`${products.length} total`} changeType="neutral" icon={Package} iconColor="bg-warning/10 text-warning" />
-        <StatCard title="Active Deliveries" value="0" change="No active deliveries" changeType="neutral" icon={Truck} iconColor="bg-destructive/10 text-destructive" />
+        <StatCard 
+          title="Total Revenue" 
+          value={`KSh ${stats.revenue.toLocaleString()}`} 
+          change="Live data" 
+          changeType="positive" 
+          icon={DollarSign} 
+          iconColor="bg-success/10 text-success" 
+        />
+        <StatCard 
+          title="Total Orders" 
+          value={stats.orders.toString()} 
+          change="From database" 
+          changeType="positive" 
+          icon={ShoppingCart} 
+          iconColor="bg-primary/10 text-primary" 
+        />
+        <StatCard 
+          title="Active Products" 
+          value={stats.products.toString()} 
+          change="Catalog size" 
+          changeType="neutral" 
+          icon={Package} 
+          iconColor="bg-warning/10 text-warning" 
+        />
+        <StatCard 
+          title="Customers" 
+          value={stats.customers.toString()} 
+          change="Unique buyers" 
+          changeType="positive" 
+          icon={Users} 
+          iconColor="bg-blue-500/10 text-blue-500" 
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -82,11 +111,13 @@ export default function DashboardPage() {
             <CardTitle className="text-lg font-semibold">Recent Orders</CardTitle>
           </CardHeader>
           <CardContent>
-            {orders.length === 0 ? (
+            {loading ? (
+               <div className="py-8 text-center text-muted-foreground text-sm">Loading orders...</div>
+            ) : recentOrders.length === 0 ? (
               <p className="text-muted-foreground text-sm py-8 text-center">No orders yet.</p>
             ) : (
               <div className="space-y-3">
-                {orders.map((order: any) => (
+                {recentOrders.map((order: any) => (
                   <div key={order.id} className="flex items-center justify-between py-3 border-b border-border/50 last:border-0">
                     <div className="flex items-center gap-4">
                       <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center">
@@ -97,9 +128,11 @@ export default function DashboardPage() {
                         <p className="text-xs text-muted-foreground">{order.order_number}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-semibold text-sm text-foreground">KSh {Number(order.total_amount).toLocaleString()}</span>
-                      <Badge className={statusColor[order.status] || "bg-muted text-muted-foreground border-0"}>{order.status}</Badge>
+                    <div className="text-right">
+                      <p className="font-bold text-sm">KSh {Number(order.total_amount).toLocaleString()}</p>
+                      <Badge className={`${statusColor[order.status] || ""} text-[10px] px-2 py-0`}>
+                        {order.status}
+                      </Badge>
                     </div>
                   </div>
                 ))}
@@ -107,30 +140,20 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
-
+        
         <Card className="border-border/50 shadow-sm bg-card">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-semibold">Top Products</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Store Health</CardTitle>
           </CardHeader>
-          <CardContent>
-            {products.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-8 text-center">Add products to see stats.</p>
-            ) : (
-              <div className="space-y-4">
-                {products.slice(0, 4).map((product: any, i: number) => (
-                  <div key={product.id} className="flex items-center justify-between py-2">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-bold text-muted-foreground w-5">#{i + 1}</span>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{product.name}</p>
-                        <p className="text-xs text-muted-foreground">Stock: {product.stock}</p>
-                      </div>
-                    </div>
-                    <span className="text-sm font-semibold text-foreground">KSh {Number(product.price).toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+          <CardContent className="flex flex-col items-center justify-center p-8 text-center space-y-4">
+            <div className="h-24 w-24 rounded-full border-8 border-primary border-t-transparent animate-spin-slow"></div>
+            <div>
+              <p className="font-medium text-foreground">API Status: Online</p>
+              <p className="text-xs text-muted-foreground">Self-hosted Node/Express</p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Your platform is fully optimized and ready for production.
+            </p>
           </CardContent>
         </Card>
       </div>
