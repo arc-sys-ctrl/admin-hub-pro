@@ -197,7 +197,7 @@ export default function ProductsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Brand</Label>
-                  <Input placeholder="e.g. DRPSTR" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
+                  <Input placeholder="e.g. Sophix" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
                 </div>
               </div>
 
