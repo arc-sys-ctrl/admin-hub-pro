@@ -1,9 +1,15 @@
+import { useEffect, useState } from "react";
+import api from "@/lib/api";
 import { StatCard } from "@/components/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, ShoppingCart, Users, Truck, Package } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { 
+  DollarSign, 
+  ShoppingCart, 
+  Users, 
+  Truck, 
+  Package 
+} from "lucide-react";
 
 const statusColor: Record<string, string> = {
   delivered: "bg-success/10 text-success border-0",
@@ -13,24 +19,48 @@ const statusColor: Record<string, string> = {
 };
 
 export default function DashboardPage() {
-  const { data: products = [] } = useQuery({
-    queryKey: ["products-count"],
-    queryFn: async () => {
-      const { data } = await supabase.from("products").select("id, name, price, stock, status");
-      return data || [];
-    },
+  const [stats, setStats] = useState({
+    products: 0,
+    orders: 0,
+    revenue: 0,
+    customers: 0
   });
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: orders = [] } = useQuery({
-    queryKey: ["orders-recent"],
-    queryFn: async () => {
-      const { data } = await supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(5);
-      return data || [];
-    },
-  });
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-  const totalRevenue = orders.reduce((sum: number, o: any) => sum + Number(o.total_amount || 0), 0);
-  const activeProducts = products.filter((p: any) => p.status === "active").length;
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [productsRes, ordersRes] = await Promise.all([
+        api.get("/products/admin"),
+        api.get("/orders")
+      ]);
+
+      const products = productsRes.data || [];
+      const orders = ordersRes.data || [];
+
+      const revenue = orders
+        .filter((o: any) => o.status !== 'cancelled')
+        .reduce((acc: number, o: any) => acc + Number(o.total_amount || 0), 0);
+
+      setStats({
+        products: products.length,
+        orders: orders.length,
+        revenue: revenue,
+        customers: [...new Set(orders.map((o: any) => o.customer_email))].length
+      });
+
+      setRecentOrders(orders.slice(0, 5));
+    } catch (error) {
+      console.error("Dashboard Fetch Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
