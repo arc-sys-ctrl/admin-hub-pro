@@ -1,31 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Search, Eye, Package, Clock, CheckCircle, Truck, Loader2 } from "lucide-react";
+import api from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Eye, Package, Clock, CheckCircle, Truck } from "lucide-react";
 
 interface Order {
   id: string;
-  customer: string;
-  email: string;
-  items: number;
-  amount: string;
+  order_number: string;
+  customer_name: string;
+  customer_email: string;
+  items: any[];
+  total_amount: number;
   status: "pending" | "processing" | "in_transit" | "delivered" | "cancelled";
-  date: string;
+  created_at: string;
   address: string;
 }
-
-const mockOrders: Order[] = [
-  { id: "ORD-001", customer: "Alice Mwangi", email: "alice@email.com", items: 3, amount: "KSh 4,500", status: "delivered", date: "Apr 7, 2026", address: "Nairobi CBD" },
-  { id: "ORD-002", customer: "Brian Ochieng", email: "brian@email.com", items: 1, amount: "KSh 2,300", status: "pending", date: "Apr 7, 2026", address: "Westlands" },
-  { id: "ORD-003", customer: "Carol Njeri", email: "carol@email.com", items: 5, amount: "KSh 8,900", status: "in_transit", date: "Apr 6, 2026", address: "Karen" },
-  { id: "ORD-004", customer: "David Kimani", email: "david@email.com", items: 2, amount: "KSh 1,200", status: "delivered", date: "Apr 6, 2026", address: "Kilimani" },
-  { id: "ORD-005", customer: "Eva Akinyi", email: "eva@email.com", items: 4, amount: "KSh 6,700", status: "pending", date: "Apr 5, 2026", address: "Langata" },
-  { id: "ORD-006", customer: "Frank Wafula", email: "frank@email.com", items: 1, amount: "KSh 3,400", status: "processing", date: "Apr 5, 2026", address: "Parklands" },
-  { id: "ORD-007", customer: "Grace Wanjiku", email: "grace@email.com", items: 2, amount: "KSh 5,600", status: "cancelled", date: "Apr 4, 2026", address: "South B" },
-];
 
 const statusStyles: Record<string, string> = {
   pending: "bg-warning/10 text-warning border-0",
@@ -46,19 +38,37 @@ const statusIcons: Record<string, React.ReactNode> = {
 export default function OrdersPage() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("all");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = mockOrders.filter((o) => {
-    const matchSearch = o.customer.toLowerCase().includes(search.toLowerCase()) || o.id.toLowerCase().includes(search.toLowerCase());
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/orders");
+      setOrders(response.data);
+    } catch (error) {
+      console.error("Failed to fetch orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filtered = orders.filter((o) => {
+    const matchSearch = o.customer_name.toLowerCase().includes(search.toLowerCase()) || o.order_number.toLowerCase().includes(search.toLowerCase());
     if (tab === "all") return matchSearch;
     return matchSearch && o.status === tab;
   });
 
   const counts = {
-    all: mockOrders.length,
-    pending: mockOrders.filter((o) => o.status === "pending").length,
-    processing: mockOrders.filter((o) => o.status === "processing").length,
-    in_transit: mockOrders.filter((o) => o.status === "in_transit").length,
-    delivered: mockOrders.filter((o) => o.status === "delivered").length,
+    all: orders.length,
+    pending: orders.filter((o) => o.status === "pending").length,
+    processing: orders.filter((o) => o.status === "processing").length,
+    in_transit: orders.filter((o) => o.status === "in_transit").length,
+    delivered: orders.filter((o) => o.status === "delivered").length,
   };
 
   return (
@@ -99,31 +109,49 @@ export default function OrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((order) => (
-                  <tr key={order.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="p-4 font-medium text-sm text-foreground">{order.id}</td>
-                    <td className="p-4">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{order.customer}</p>
-                        <p className="text-xs text-muted-foreground">{order.address}</p>
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm text-muted-foreground">{order.date}</td>
-                    <td className="p-4 text-sm text-foreground">{order.items}</td>
-                    <td className="p-4 text-sm font-semibold text-foreground">{order.amount}</td>
-                    <td className="p-4">
-                      <Badge className={`${statusStyles[order.status]} flex items-center gap-1 w-fit`}>
-                        {statusIcons[order.status]}
-                        {order.status.replace("_", " ")}
-                      </Badge>
-                    </td>
-                    <td className="p-4 text-right">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
                     </td>
                   </tr>
-                ))}
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-muted-foreground text-sm">
+                      No orders found.
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((order) => (
+                    <tr key={order.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="p-4 font-medium text-sm text-foreground">{order.order_number}</td>
+                      <td className="p-4">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">{order.customer_name}</p>
+                          <p className="text-xs text-muted-foreground">{order.address}</p>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-muted-foreground">
+                        {new Date(order.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="p-4 text-sm text-foreground">{order.items?.length || 0}</td>
+                      <td className="p-4 text-sm font-semibold text-foreground">
+                        KES {Number(order.total_amount).toLocaleString()}
+                      </td>
+                      <td className="p-4">
+                        <Badge className={`${statusStyles[order.status]} flex items-center gap-1 w-fit`}>
+                          {statusIcons[order.status]}
+                          {order.status.replace("_", " ")}
+                        </Badge>
+                      </td>
+                      <td className="p-4 text-right">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
