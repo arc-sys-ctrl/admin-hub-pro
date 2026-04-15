@@ -51,6 +51,8 @@ export default function ProductsPage() {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [additionalFiles, setAdditionalFiles] = useState<File[]>([]);
+  const [additionalPreviews, setAdditionalPreviews] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -59,6 +61,14 @@ export default function ProductsPage() {
     queryKey: ["admin-products"],
     queryFn: async () => {
       const response = await api.get("/products/admin");
+      return response.data;
+    },
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const response = await api.get("/categories");
       return response.data;
     },
   });
@@ -88,7 +98,15 @@ export default function ProductsPage() {
         formData.append("image_url", editingProduct.image_url);
       }
 
+      additionalFiles.forEach(file => {
+        formData.append("images", file);
+      });
+
       if (editingProduct) {
+        // For updates, we might want to keep existing additional images
+        if (editingProduct.image_urls) {
+          formData.append("image_urls", JSON.stringify(editingProduct.image_urls));
+        }
         await api.put(`/products/${editingProduct.id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" }
         });
@@ -138,6 +156,8 @@ export default function ProductsPage() {
     });
     setImageFile(null);
     setImagePreview(null);
+    setAdditionalFiles([]);
+    setAdditionalPreviews([]);
     setEditingProduct(null);
   };
 
@@ -158,6 +178,11 @@ export default function ProductsPage() {
       is_trending: !!product.is_trending,
     });
     setImagePreview(product.image_url ? (product.image_url.startsWith('http') ? product.image_url : `${import.meta.env.VITE_API_URL || ''}${product.image_url}`) : null);
+    
+    if (product.image_urls && Array.isArray(product.image_urls)) {
+      setAdditionalPreviews(product.image_urls.map((url: string) => url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL || ''}${url}`));
+    }
+    
     setDialogOpen(true);
   };
 
@@ -166,6 +191,15 @@ export default function ProductsPage() {
     if (file) {
       setImageFile(file);
       setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setAdditionalFiles(prev => [...prev, ...files]);
+      const newPreviews = files.map(file => URL.createObjectURL(file));
+      setAdditionalPreviews(prev => [...prev, ...newPreviews]);
     }
   };
 
@@ -219,7 +253,22 @@ export default function ProductsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <Input placeholder="e.g. Hoodies" value={form.category_name} onChange={(e) => setForm({ ...form, category_name: e.target.value })} />
+                  <Select 
+                    value={form.category_name} 
+                    onValueChange={(v) => {
+                      const cat = categories.find((c: any) => c.name === v);
+                      setForm({ ...form, category_name: v });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((cat: any) => (
+                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -262,19 +311,36 @@ export default function ProductsPage() {
                 <Textarea placeholder="Product description..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
 
-              <div className="space-y-2">
-                <Label>Product Image</Label>
-                <label className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary/50 transition-colors block">
-                  {imagePreview ? (
-                    <img src={imagePreview} alt="Preview" className="h-32 w-32 object-cover rounded-lg mx-auto" />
-                  ) : (
-                    <>
-                      <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">Click to upload product image</p>
-                    </>
-                  )}
-                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
-                </label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Main Image</Label>
+                  <label className="border-2 border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary/50 transition-colors block h-40">
+                    {imagePreview ? (
+                      <img src={imagePreview} alt="Preview" className="h-full w-full object-cover rounded-lg mx-auto" />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <ImageIcon className="h-6 w-6 mx-auto text-muted-foreground mb-1" />
+                        <p className="text-xs text-muted-foreground">Main Product Image</p>
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                  </label>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Additional Images</Label>
+                  <div className="grid grid-cols-2 gap-2 h-40 overflow-y-auto pr-1">
+                    {additionalPreviews.map((p, i) => (
+                      <div key={i} className="relative h-16 w-full group">
+                        <img src={p} className="h-full w-full object-cover rounded-md" />
+                      </div>
+                    ))}
+                    <label className="border-2 border-dashed border-border rounded-md flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors h-16">
+                      <Plus className="h-4 w-4 text-muted-foreground" />
+                      <input type="file" accept="image/*" multiple onChange={handleAdditionalImagesChange} className="hidden" />
+                    </label>
+                  </div>
+                </div>
               </div>
 
               <Button type="submit" className="w-full" disabled={uploading}>
@@ -338,7 +404,17 @@ export default function ProductsPage() {
                         </div>
                       </td>
                       <td className="p-4 text-sm text-muted-foreground">{product.category_name || "—"}</td>
-                      <td className="p-4 text-sm font-semibold text-foreground">KSh {Number(product.price).toLocaleString()}</td>
+                      <td className="p-4">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-semibold text-foreground">KSh {Number(product.price).toLocaleString()}</span>
+                          {product.original_price && Number(product.original_price) > Number(product.price) && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-muted-foreground line-through">KSh {Number(product.original_price).toLocaleString()}</span>
+                              <span className="text-[10px] text-success font-medium">-{Math.round(((Number(product.original_price) - Number(product.price)) / Number(product.original_price)) * 100)}%</span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
                       <td className="p-4 text-sm text-foreground">{product.stock}</td>
                       <td className="p-4">
                         <Badge className={statusStyles[product.status] || ""}>{product.status.replace("_", " ")}</Badge>
