@@ -57,6 +57,15 @@ export default function OrdersPage() {
     }
   };
 
+  const updateStatus = async (orderId: string, status: Order["status"]) => {
+    try {
+      await api.patch(`/orders/${orderId}/status`, { status });
+      setOrders(orders.map(o => o.id === orderId ? { ...o, status } : o));
+    } catch (error) {
+      console.error("Failed to update status:", error);
+    }
+  };
+
   const filtered = orders.filter((o) => {
     const matchSearch = o.customer_name.toLowerCase().includes(search.toLowerCase()) || o.order_number.toLowerCase().includes(search.toLowerCase());
     if (tab === "all") return matchSearch;
@@ -144,10 +153,21 @@ export default function OrdersPage() {
                           {order.status.replace("_", " ")}
                         </Badge>
                       </td>
-                      <td className="p-4 text-right">
+                      <td className="p-4 text-right flex items-center justify-end gap-2">
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                           <Eye className="h-4 w-4" />
                         </Button>
+                        <select
+                          className="text-xs bg-background border border-border rounded px-1 h-8 focus:outline-none focus:ring-1 focus:ring-primary"
+                          value={order.status}
+                          onChange={(e) => updateStatus(order.id, e.target.value as any)}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="processing">Processing</option>
+                          <option value="in_transit">In Transit</option>
+                          <option value="delivered">Delivered</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
                       </td>
                     </tr>
                   ))
