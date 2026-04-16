@@ -26,6 +26,7 @@ import {
 const mainNav = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Products", url: "/products", icon: Package },
+  { title: "Categories", url: "/categories", icon: Package },
   { title: "Orders", url: "/orders", icon: ShoppingCart },
   { title: "Users", url: "/users", icon: Users },
   { title: "Delivery", url: "/delivery", icon: Truck },

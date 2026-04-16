@@ -20,7 +20,7 @@ import { Loader2 } from "lucide-react";
 const queryClient = new QueryClient();
 
 function ProtectedRoutes() {
-  const { session, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -30,7 +30,7 @@ function ProtectedRoutes() {
     );
   }
 
-  if (!session) {
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
@@ -51,11 +51,11 @@ function ProtectedRoutes() {
 }
 
 function AppRoutes() {
-  const { session, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   return (
     <Routes>
-      <Route path="/login" element={loading ? null : session ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path="/login" element={loading ? null : user ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route path="/*" element={<ProtectedRoutes />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -68,7 +68,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter basename="/admin">
           <AppRoutes />
         </BrowserRouter>
       </AuthProvider>

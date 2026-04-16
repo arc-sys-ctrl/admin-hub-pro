@@ -65,9 +65,23 @@ export default function LoginPage() {
       
       navigate("/");
     } catch (error: any) {
+      console.error("[Login Error Trace]", {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+        url: error.config?.url
+      });
+
+      let errorMessage = "An error occurred during login.";
+      if (error.code === "ERR_NETWORK") {
+        errorMessage = "Network error. The backend might be offline or the proxy is misconfigured.";
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
       toast({
         title: "Login failed",
-        description: error.response?.data?.error || "An error occurred during login.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
