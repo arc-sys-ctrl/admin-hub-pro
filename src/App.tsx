@@ -31,13 +31,14 @@ function ProtectedRoutes() {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return (
     <Routes>
       <Route element={<AdminLayout />}>
-        <Route path="/" element={<DashboardPage />} />
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/categories" element={<CategoriesPage />} />
         <Route path="/orders" element={<OrdersPage />} />
@@ -55,7 +56,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/login" element={loading ? null : user ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path="/" element={loading ? null : user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
       <Route path="/*" element={<ProtectedRoutes />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -68,7 +69,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AuthProvider>
-        <BrowserRouter basename="/admin">
+        <BrowserRouter>
           <AppRoutes />
         </BrowserRouter>
       </AuthProvider>
