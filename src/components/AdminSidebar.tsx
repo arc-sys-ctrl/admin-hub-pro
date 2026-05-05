@@ -50,7 +50,7 @@ export function AdminSidebar() {
             {!collapsed && (
               <span className="flex items-center gap-2 text-sidebar-primary-foreground font-bold text-lg tracking-tight">
                 <Package className="h-6 w-6 text-sidebar-primary" />
-                Style Haven
+                Sophix
               </span>
             )}
             {collapsed && <Package className="h-6 w-6 text-sidebar-primary" />}

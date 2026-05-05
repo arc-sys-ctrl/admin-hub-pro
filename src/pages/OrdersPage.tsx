@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import {
   Search,
   Eye,
@@ -84,10 +86,13 @@ const sourceConfig: Record<string, { label: string; style: string }> = {
 };
 
 export default function OrdersPage() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("all");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [detailOrder, setDetailOrder] = useState<Order | null>(null);
 
@@ -109,10 +114,28 @@ export default function OrdersPage() {
 
   const updateStatus = async (orderId: string, status: Order["status"]) => {
     try {
+      setStatusUpdatingId(orderId);
       await api.patch(`/orders/${orderId}/status`, { status });
-      setOrders(orders.map((o) => (o.id === orderId ? { ...o, status } : o)));
-    } catch (error) {
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
+      setDetailOrder((d) => (d && d.id === orderId ? { ...d, status } : d));
+      queryClient.invalidateQueries({ queryKey: ["admin-orders-delivery"] });
+      toast({
+        title: "Order status updated",
+        description: `Now ${status.replace("_", " ")}. Customers with the app get a push when the order is linked to their account.`,
+      });
+    } catch (error: unknown) {
       console.error("Failed to update status:", error);
+      const msg =
+        error && typeof error === "object" && "response" in error
+          ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+          : undefined;
+      toast({
+        title: "Could not update status",
+        description: msg || "Try again or check your connection.",
+        variant: "destructive",
+      });
+    } finally {
+      setStatusUpdatingId(null);
     }
   };
 
@@ -269,9 +292,10 @@ export default function OrdersPage() {
                               <Eye className="h-4 w-4" />
                             </Button>
                             <select
-                              className="text-xs bg-background border border-border rounded px-1 h-8 focus:outline-none focus:ring-1 focus:ring-primary"
+                              className="text-xs bg-background border border-border rounded px-1 h-8 focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
                               value={order.status}
-                              onChange={(e) => updateStatus(order.id, e.target.value as any)}
+                              disabled={statusUpdatingId === order.id}
+                              onChange={(e) => updateStatus(order.id, e.target.value as Order["status"])}
                             >
                               <option value="pending">Pending</option>
                               <option value="processing">Processing</option>

@@ -20,11 +20,11 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Store Name</Label>
-            <Input defaultValue="Style Haven" />
+            <Input defaultValue="Sophix" />
           </div>
           <div className="space-y-2">
             <Label>Contact Email</Label>
-            <Input defaultValue="admin@stylehaven.co.ke" />
+            <Input defaultValue="admin@sophix.app" />
           </div>
           <div className="space-y-2">
             <Label>Phone</Label>

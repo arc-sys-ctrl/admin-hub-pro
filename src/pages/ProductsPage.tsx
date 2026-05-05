@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,8 +31,11 @@ const statusStyles: Record<string, string> = {
   out_of_stock: "bg-destructive/10 text-destructive border-0",
 };
 
+const PAGE_SIZE = 25;
+
 export default function ProductsPage() {
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [form, setForm] = useState({ 
@@ -42,8 +45,9 @@ export default function ProductsPage() {
     price: "", 
     original_price: "",
     stock: "", 
-    category_name: "", 
-    status: "draft",
+    category_name: "",
+    category_id: "",
+    status: "active",
     sizes: "",
     vendor: "",
     is_new: false,
@@ -57,13 +61,32 @@ export default function ProductsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ["admin-products"],
+  const { data: catalog = { products: [] as any[], total: 0 }, isLoading } = useQuery({
+    queryKey: ["admin-products", page, search.trim()],
     queryFn: async () => {
-      const response = await api.get("/products/admin");
-      return response.data;
+      const response = await api.get("/products/admin", {
+        params: {
+          limit: PAGE_SIZE,
+          offset: (page - 1) * PAGE_SIZE,
+          ...(search.trim() ? { search: search.trim() } : {}),
+        },
+      });
+      const raw = response.headers["x-total-count"];
+      const total = parseInt(typeof raw === "string" ? raw : String(raw ?? "0"), 10);
+      return {
+        products: Array.isArray(response.data) ? response.data : [],
+        total: Number.isFinite(total) ? total : 0,
+      };
     },
   });
+
+  const products = catalog.products;
+  const totalCount = catalog.total;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -84,6 +107,9 @@ export default function ProductsPage() {
       formData.append("original_price", form.original_price);
       formData.append("stock", form.stock);
       formData.append("category_name", form.category_name);
+      if (form.category_id) {
+        formData.append("category_id", form.category_id);
+      }
       formData.append("status", form.status);
       formData.append("vendor", form.vendor);
       formData.append("is_new", String(form.is_new));
@@ -107,13 +133,10 @@ export default function ProductsPage() {
         if (editingProduct.image_urls) {
           formData.append("image_urls", JSON.stringify(editingProduct.image_urls));
         }
-        await api.put(`/products/${editingProduct.id}`, formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
+        // Let axios set multipart boundary automatically (manual Content-Type breaks uploads)
+        await api.put(`/products/${editingProduct.id}`, formData);
       } else {
-        await api.post("/products", formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
+        await api.post("/products", formData);
       }
     },
     onSuccess: () => {
@@ -124,7 +147,9 @@ export default function ProductsPage() {
       setUploading(false);
     },
     onError: (err: any) => {
-      toast({ title: "Error", description: err.response?.data?.error || err.message, variant: "destructive" });
+      const d = err.response?.data;
+      const msg = d?.message || d?.error || err.message;
+      toast({ title: "Error", description: msg, variant: "destructive" });
       setUploading(false);
     },
   });
@@ -147,8 +172,9 @@ export default function ProductsPage() {
       price: "", 
       original_price: "",
       stock: "", 
-      category_name: "", 
-      status: "draft",
+      category_name: "",
+      category_id: "",
+      status: "active",
       sizes: "",
       vendor: "",
       is_new: false,
@@ -171,6 +197,7 @@ export default function ProductsPage() {
       original_price: product.original_price?.toString() || "",
       stock: product.stock.toString(),
       category_name: product.category_name || "",
+      category_id: product.category_id || "",
       status: product.status,
       sizes: Array.isArray(product.sizes) ? product.sizes.join(", ") : "",
       vendor: product.vendor || "",
@@ -203,11 +230,6 @@ export default function ProductsPage() {
     }
   };
 
-  const filtered = products.filter((p: any) =>
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
-    (p.brand && p.brand.toLowerCase().includes(search.toLowerCase()))
-  );
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -223,7 +245,21 @@ export default function ProductsPage() {
             <DialogHeader>
               <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={(e) => { e.preventDefault(); saveMutation.mutate(); }} className="space-y-4 pt-2">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!editingProduct && !imageFile) {
+                  toast({
+                    title: "Main image required",
+                    description: "Choose a main product photo from your computer before saving a new product.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+                saveMutation.mutate();
+              }}
+              className="space-y-4 pt-2"
+            >
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Product Name</Label>
@@ -257,7 +293,11 @@ export default function ProductsPage() {
                     value={form.category_name} 
                     onValueChange={(v) => {
                       const cat = categories.find((c: any) => c.name === v);
-                      setForm({ ...form, category_name: v });
+                      setForm({
+                        ...form,
+                        category_name: v,
+                        category_id: cat?.id ?? "",
+                      });
                     }}
                   >
                     <SelectTrigger>
@@ -278,11 +318,12 @@ export default function ProductsPage() {
                   <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="draft">Draft (hidden in app)</SelectItem>
+                      <SelectItem value="active">Active (visible in app)</SelectItem>
                       <SelectItem value="out_of_stock">Out of Stock</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-[11px] text-muted-foreground">Only <strong>Active</strong> products appear in the storefront and mobile app.</p>
                 </div>
                 <div className="space-y-2">
                   <Label>Vendor</Label>
@@ -313,7 +354,7 @@ export default function ProductsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Main Image</Label>
+                  <Label>Main Image {!editingProduct && <span className="text-destructive">*</span>}</Label>
                   <label className="border-2 border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary/50 transition-colors block h-40">
                     {imagePreview ? (
                       <img src={imagePreview} alt="Preview" className="h-full w-full object-cover rounded-lg mx-auto" />
@@ -376,13 +417,15 @@ export default function ProductsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.length === 0 ? (
+                  {products.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="p-12 text-center text-muted-foreground">
-                        No products yet. Click "Add Product" to get started.
+                        {search.trim()
+                          ? "No products match this search."
+                          : 'No products yet. Click "Add Product" to get started.'}
                       </td>
                     </tr>
-                  ) : filtered.map((product: any) => (
+                  ) : products.map((product: any) => (
                     <tr key={product.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
@@ -433,6 +476,26 @@ export default function ProductsPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {!isLoading && totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-border px-4 py-3 text-sm text-muted-foreground">
+              <span>
+                Page {page} of {totalPages} · {totalCount} products
+              </span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

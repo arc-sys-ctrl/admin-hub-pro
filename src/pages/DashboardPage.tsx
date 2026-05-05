@@ -26,6 +26,7 @@ export default function DashboardPage() {
   });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [apiHealth, setApiHealth] = useState<{ ok: boolean; message: string }>({ ok: false, message: "Checking…" });
 
   useEffect(() => {
     fetchDashboardData();
@@ -34,10 +35,17 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [productsRes, ordersRes] = await Promise.all([
+      const [productsRes, ordersRes, healthRes] = await Promise.all([
         api.get("/products/admin"),
-        api.get("/orders")
+        api.get("/orders"),
+        api.get("/health").catch(() => null),
       ]);
+
+      if (healthRes?.data?.status === "OK") {
+        setApiHealth({ ok: true, message: "Reachable" });
+      } else {
+        setApiHealth({ ok: false, message: "No response" });
+      }
 
       const products = productsRes.data || [];
       const orders = ordersRes.data || [];
@@ -56,6 +64,7 @@ export default function DashboardPage() {
       setRecentOrders(orders.slice(0, 5));
     } catch (error) {
       console.error("Dashboard Fetch Error:", error);
+      setApiHealth({ ok: false, message: "Error" });
     } finally {
       setLoading(false);
     }
@@ -143,16 +152,24 @@ export default function DashboardPage() {
         
         <Card className="border-border/50 shadow-sm bg-card">
           <CardHeader>
-            <CardTitle className="text-lg font-semibold">Store Health</CardTitle>
+            <CardTitle className="text-lg font-semibold">API health</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col items-center justify-center p-8 text-center space-y-4">
-            <div className="h-24 w-24 rounded-full border-8 border-primary border-t-transparent animate-spin-slow"></div>
+            <div
+              className={`h-16 w-16 rounded-full flex items-center justify-center text-2xl font-bold ${
+                apiHealth.ok ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
+              }`}
+            >
+              {apiHealth.ok ? "✓" : "!"}
+            </div>
             <div>
-              <p className="font-medium text-foreground">API Status: Online</p>
-              <p className="text-xs text-muted-foreground">Self-hosted Node/Express</p>
+              <p className="font-medium text-foreground">
+                {apiHealth.ok ? "Backend OK" : "Backend issue"}
+              </p>
+              <p className="text-xs text-muted-foreground">GET /api/health — {apiHealth.message}</p>
             </div>
             <p className="text-sm text-muted-foreground">
-              Your platform is fully optimized and ready for production.
+              Dashboard metrics load from your database via the same API the storefront uses.
             </p>
           </CardContent>
         </Card>

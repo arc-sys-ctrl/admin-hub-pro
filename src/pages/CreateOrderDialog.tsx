@@ -282,8 +282,19 @@ export function CreateOrderDialog({ open, onOpenChange, onSuccess }: CreateOrder
         notes,
       };
 
-      await api.post("/orders/admin", payload);
-      toast({ title: "Order created successfully!", description: `Order placed via CRM for ${payload.customer_name}` });
+      const { data } = await api.post<{
+        linked_by_email?: boolean;
+        user_id?: string | null;
+      }>("/orders/admin", payload);
+      const pushHint =
+        data?.user_id &&
+        (data.linked_by_email || customerMode === "existing")
+          ? " They will get app push notifications for this order if they use the Sophix app."
+          : "";
+      toast({
+        title: "Order created successfully!",
+        description: `Order placed via CRM for ${payload.customer_name}.${pushHint}`,
+      });
       onSuccess();
       onOpenChange(false);
       reset();

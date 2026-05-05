@@ -2,28 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Sophix CRM — aligned with mobile app (dark + cyan #00D1FF) */
 @layer base {
   :root {
-    --background: 0 0% 8%;
-    --foreground: 40 10% 92%;
+    --background: 218 33% 6%;
+    --foreground: 210 20% 96%;
 
-    --card: 0 0% 12%;
-    --card-foreground: 40 10% 92%;
+    --card: 214 22% 11%;
+    --card-foreground: 210 20% 96%;
 
-    --popover: 0 0% 12%;
-    --popover-foreground: 40 10% 92%;
+    --popover: 214 22% 11%;
+    --popover-foreground: 210 20% 96%;
 
-    --primary: 30 40% 65%;
-    --primary-foreground: 0 0% 5%;
+    --primary: 191 100% 50%;
+    --primary-foreground: 218 33% 6%;
 
-    --secondary: 0 0% 16%;
-    --secondary-foreground: 40 10% 85%;
+    --secondary: 214 18% 14%;
+    --secondary-foreground: 210 15% 90%;
 
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 55%;
+    --muted: 214 16% 16%;
+    --muted-foreground: 215 14% 58%;
 
-    --accent: 30 40% 65%;
-    --accent-foreground: 0 0% 5%;
+    --accent: 191 100% 50%;
+    --accent-foreground: 218 33% 6%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -32,26 +33,26 @@
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 5%;
+    --warning-foreground: 218 33% 6%;
 
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 30 40% 65%;
+    --border: 214 16% 18%;
+    --input: 214 16% 18%;
+    --ring: 191 100% 50%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 6%;
-    --sidebar-foreground: 0 0% 60%;
-    --sidebar-primary: 30 40% 65%;
-    --sidebar-primary-foreground: 0 0% 5%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 40 10% 90%;
-    --sidebar-border: 0 0% 14%;
-    --sidebar-ring: 30 40% 65%;
-    --sidebar-muted: 0 0% 40%;
+    --sidebar-background: 218 35% 5%;
+    --sidebar-foreground: 215 14% 65%;
+    --sidebar-primary: 191 100% 50%;
+    --sidebar-primary-foreground: 218 33% 6%;
+    --sidebar-accent: 214 22% 12%;
+    --sidebar-accent-foreground: 210 20% 94%;
+    --sidebar-border: 214 16% 14%;
+    --sidebar-ring: 191 100% 50%;
+    --sidebar-muted: 215 12% 42%;
 
-    --glass: 0 0% 100%;
-    --glass-foreground: 40 10% 92%;
+    --glass: 210 20% 100%;
+    --glass-foreground: 210 20% 96%;
   }
 }
 
@@ -82,14 +83,14 @@
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(30 40% 65%), hsl(40 50% 75%));
+    background: linear-gradient(135deg, hsl(191 100% 50%), hsl(195 100% 65%), hsl(191 100% 45%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .glow-gold {
-    box-shadow: 0 0 40px hsla(30 40% 65% / 0.15), 0 0 80px hsla(30 40% 65% / 0.05);
+  .glow-accent {
+    box-shadow: 0 0 40px hsla(191 100% 50% / 0.2), 0 0 80px hsla(191 100% 50% / 0.08);
   }
 }
 
@@ -101,8 +102,8 @@
 }
 
 @keyframes logo-glow {
-  0%, 100% { text-shadow: 0 0 20px hsla(30, 40%, 65%, 0.3); }
-  50% { text-shadow: 0 0 40px hsla(30, 40%, 65%, 0.6), 0 0 80px hsla(30, 40%, 65%, 0.2); }
+  0%, 100% { text-shadow: 0 0 20px hsla(191, 100%, 50%, 0.35); }
+  50% { text-shadow: 0 0 40px hsla(191, 100%, 50%, 0.65), 0 0 80px hsla(191, 100%, 50%, 0.25); }
 }
 
 @keyframes grid-scroll {
@@ -146,7 +147,7 @@
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, hsla(30, 40%, 65%, 0.1), transparent);
+  background: linear-gradient(90deg, transparent, hsla(191 100% 50% / 0.12), transparent);
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
