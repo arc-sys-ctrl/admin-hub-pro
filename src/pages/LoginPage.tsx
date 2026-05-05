@@ -127,12 +127,10 @@ export default function LoginPage() {
         const detail = extractErrorDetail(err.response?.data);
         errorMessage = detail
           ? detail
-          : "The dev proxy could not reach the Sophix API. Start sophix-backend on port 5000, or set VITE_API_PROXY_TARGET in admin-side/.env.development (e.g. http://localhost:5000 if 127.0.0.1 fails).";
+          : "Cannot reach the hosted Sophix API. Verify VITE_API_URL points to https://sophix-backend.onrender.com/api and redeploy/restart the CRM.";
       } else if (isNetworkish && !err.response) {
         errorMessage =
-          "Cannot reach the API. Start sophix-backend on port 5000 (`cd sophix-backend && npm start`) or run your Docker dev stack. " +
-          "If you set VITE_API_URL in admin-side `.env`, remove it or point it at a running server. " +
-          "Local dev uses the Vite proxy: /api → http://127.0.0.1:5000 (override with VITE_API_PROXY_TARGET).";
+          "Cannot reach the hosted API. Ensure VITE_API_URL is set to https://sophix-backend.onrender.com/api and the backend service is healthy.";
       } else if (err.response?.status === 400) {
         errorMessage = serverMsg || "Email and password are required.";
       } else if (err.response?.status === 401) {
@@ -259,11 +257,9 @@ export default function LoginPage() {
                     API unreachable
                   </p>
                   <p className="mt-1 text-muted-foreground leading-relaxed">
-                    Start <code className="text-foreground/90">sophix-backend</code> on port{" "}
-                    <code className="text-foreground/90">5000</code>, or set{" "}
-                    <code className="text-foreground/90">VITE_API_PROXY_TARGET</code> in{" "}
-                    <code className="text-foreground/90">admin-side/.env.development</code> if your API listens
-                    elsewhere. Remove a wrong <code className="text-foreground/90">VITE_API_URL</code> for local Vite.
+                    CRM cannot reach the hosted backend. Set{" "}
+                    <code className="text-foreground/90">VITE_API_URL=https://sophix-backend.onrender.com/api</code>{" "}
+                    and restart/redeploy admin-side.
                   </p>
                 </div>
               </div>
