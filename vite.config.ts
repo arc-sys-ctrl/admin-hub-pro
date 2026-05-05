@@ -7,14 +7,14 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  // Default: API on host port 5000 (`npm start` in sophix-backend or docker-compose.dev.yml).
-  // Override: VITE_API_PROXY_TARGET=http://127.0.0.1:<port> in .env.development / .env.local
-  // Prefer 127.0.0.1 (IPv4). If you see ECONNREFUSED only from the CRM, try
-  // VITE_API_PROXY_TARGET=http://localhost:5000 in admin-side/.env.development
-  const apiProxyTarget = env.VITE_API_PROXY_TARGET || "http://127.0.0.1:5000";
+  // Default dev proxy target points to deployed API, not localhost.
+  // Override with VITE_API_PROXY_TARGET if you intentionally run backend locally.
+  const apiProxyTarget =
+    env.VITE_API_PROXY_TARGET || "https://sophix-backend.onrender.com";
+  const basePath = env.VITE_BASE_PATH || "/";
 
   return {
-  base: "/admin",
+  base: basePath,
   server: {
     host: "::",
     port: 8080,
