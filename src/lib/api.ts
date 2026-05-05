@@ -2,8 +2,10 @@ import axios from 'axios';
 
 // Dev: omit VITE_API_URL — use relative `/api` so Vite proxies to the backend (vite.config.ts).
 // If you set VITE_API_URL to an absolute URL, the browser calls it directly (CORS + host must be up).
+export const resolvedApiBaseUrl = import.meta.env.VITE_API_URL || '/api';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: resolvedApiBaseUrl,
   timeout: 30000,
 });
 
