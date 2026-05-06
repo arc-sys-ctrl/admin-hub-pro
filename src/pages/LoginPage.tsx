@@ -127,10 +127,10 @@ export default function LoginPage() {
         const detail = extractErrorDetail(err.response?.data);
         errorMessage = detail
           ? detail
-          : "Cannot reach the hosted Sophix API. Verify VITE_API_URL points to https://sophix-backend.onrender.com/api and redeploy/restart the CRM.";
+          : "Cannot reach the hosted Sophix API. Verify VITE_API_URL points to https://sophix-backend-1.onrender.com/api and redeploy/restart the CRM.";
       } else if (isNetworkish && !err.response) {
         errorMessage =
-          "Cannot reach the hosted API. Ensure VITE_API_URL is set to https://sophix-backend.onrender.com/api and the backend service is healthy.";
+          "Cannot reach the hosted API. Ensure VITE_API_URL is set to https://sophix-backend-1.onrender.com/api and the backend service is healthy.";
       } else if (err.response?.status === 400) {
         errorMessage = serverMsg || "Email and password are required.";
       } else if (err.response?.status === 401) {
@@ -258,7 +258,7 @@ export default function LoginPage() {
                   </p>
                   <p className="mt-1 text-muted-foreground leading-relaxed">
                     CRM cannot reach the hosted backend. Set{" "}
-                    <code className="text-foreground/90">VITE_API_URL=https://sophix-backend.onrender.com/api</code>{" "}
+                    <code className="text-foreground/90">VITE_API_URL=https://sophix-backend-1.onrender.com/api</code>{" "}
                     and restart/redeploy admin-side.
                   </p>
                 </div>

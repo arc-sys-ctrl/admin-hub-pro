@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   // Default dev proxy target points to deployed API, not localhost.
   // Override with VITE_API_PROXY_TARGET if you intentionally run backend locally.
   const apiProxyTarget =
-    env.VITE_API_PROXY_TARGET || "https://sophix-backend.onrender.com";
+    env.VITE_API_PROXY_TARGET || "https://sophix-backend-1.onrender.com";
 
   return {
   // CRM is hosted at domain root on Render static hosting.
