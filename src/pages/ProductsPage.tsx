@@ -7,6 +7,7 @@ import { Plus, Search, Edit, Trash2, ImageIcon, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -252,6 +253,11 @@ export default function ProductsPage() {
           <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
+              <DialogDescription>
+                {editingProduct
+                  ? "Update product details, media, inventory, and storefront visibility."
+                  : "Create a new product with images and details for storefront and app."}
+              </DialogDescription>
             </DialogHeader>
             <form
               onSubmit={(e) => {
