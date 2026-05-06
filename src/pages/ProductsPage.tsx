@@ -33,6 +33,14 @@ const statusStyles: Record<string, string> = {
 
 const PAGE_SIZE = 25;
 
+function resolveMediaUrl(path?: string | null) {
+  if (!path) return "";
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const apiBase = String(import.meta.env.VITE_API_URL || "/api").replace(/\/+$/, "");
+  const origin = apiBase.endsWith("/api") ? apiBase.slice(0, -4) : apiBase;
+  return `${origin}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -204,10 +212,10 @@ export default function ProductsPage() {
       is_new: !!product.is_new,
       is_trending: !!product.is_trending,
     });
-    setImagePreview(product.image_url ? (product.image_url.startsWith('http') ? product.image_url : `${import.meta.env.VITE_API_URL || ''}${product.image_url}`) : null);
+    setImagePreview(product.image_url ? resolveMediaUrl(product.image_url) : null);
     
     if (product.image_urls && Array.isArray(product.image_urls)) {
-      setAdditionalPreviews(product.image_urls.map((url: string) => url.startsWith('http') ? url : `${import.meta.env.VITE_API_URL || ''}${url}`));
+      setAdditionalPreviews(product.image_urls.map((url: string) => resolveMediaUrl(url)));
     }
     
     setDialogOpen(true);
@@ -432,7 +440,7 @@ export default function ProductsPage() {
                           <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
                             {product.image_url ? (
                               <img 
-                                src={product.image_url.startsWith('http') ? product.image_url : `${import.meta.env.VITE_API_URL || ''}${product.image_url}`} 
+                                src={resolveMediaUrl(product.image_url)} 
                                 alt={product.name} 
                                 className="h-10 w-10 object-cover rounded-lg" 
                               />
