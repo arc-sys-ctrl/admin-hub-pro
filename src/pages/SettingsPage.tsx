@@ -111,8 +111,28 @@ export default function SettingsPage() {
             <Textarea value={form.hero?.title || ""} onChange={(e) => setForm({ ...form, hero: { ...form.hero, title: e.target.value } })} />
           </div>
           <div className="space-y-2">
+            <Label>Message (optional)</Label>
+            <Textarea
+              placeholder="e.g. Happy New Year!"
+              value={form.hero?.message || ""}
+              onChange={(e) => setForm({ ...form, hero: { ...form.hero, message: e.target.value } })}
+            />
+          </div>
+          <div className="space-y-2">
             <Label>CTA Text</Label>
             <Input value={form.hero?.ctaText || ""} onChange={(e) => setForm({ ...form, hero: { ...form.hero, ctaText: e.target.value } })} />
+          </div>
+          <div className="space-y-2">
+            <Label>Video URL (optional)</Label>
+            <Input
+              placeholder="https://youtube.com/... or https://..."
+              value={form.hero?.videoUrl || ""}
+              onChange={(e) => setForm({ ...form, hero: { ...form.hero, videoUrl: e.target.value } })}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label>Show video button</Label>
+            <Switch checked={!!form.hero?.showVideo} onCheckedChange={(v) => setForm({ ...form, hero: { ...form.hero, showVideo: v } })} />
           </div>
           <Button onClick={() => save.mutate()} disabled={save.isPending}>Save Hero Content</Button>
         </CardContent>
