@@ -140,6 +140,16 @@ export default function DeliveryPage() {
                         {d.order_number}
                         {d.address ? ` → ${d.address}` : ""}
                       </p>
+                  {d.address ? (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.address)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] text-primary underline"
+                    >
+                      Open in Maps
+                    </a>
+                  ) : null}
                     </div>
                     <Badge className="bg-primary/10 text-primary border-0 shrink-0 capitalize">{d.status.replace("_", " ")}</Badge>
                   </div>

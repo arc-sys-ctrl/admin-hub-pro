@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export function AdminLayout() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const initials = user?.email?.charAt(0).toUpperCase() || "A";
 
   return (
@@ -28,7 +30,7 @@ export function AdminLayout() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative" onClick={() => navigate("/settings")}>
                 <Bell className="h-5 w-5 text-muted-foreground" />
                 <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-primary text-primary-foreground text-[10px] rounded-full flex items-center justify-center font-bold">
                   3
