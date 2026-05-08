@@ -12,6 +12,7 @@ import UsersPage from "./pages/UsersPage";
 import DeliveryPage from "./pages/DeliveryPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import SettingsPage from "./pages/SettingsPage";
+import CommunicationPage from "./pages/CommunicationPage";
 import CategoriesPage from "./pages/CategoriesPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
@@ -45,6 +46,7 @@ function ProtectedRoutes() {
         <Route path="/users" element={<UsersPage />} />
         <Route path="/delivery" element={<DeliveryPage />} />
         <Route path="/reviews" element={<ReviewsPage />} />
+        <Route path="/communication" element={<CommunicationPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>
     </Routes>

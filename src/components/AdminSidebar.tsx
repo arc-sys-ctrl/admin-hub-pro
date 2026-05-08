@@ -6,6 +6,7 @@ import {
   Truck,
   Star,
   Settings,
+  MessageSquare,
   LogOut,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
@@ -34,6 +35,7 @@ const mainNav = [
 ];
 
 const bottomNav = [
+  { title: "Communication", url: "/communication", icon: MessageSquare },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
